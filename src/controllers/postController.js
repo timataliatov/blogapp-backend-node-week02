@@ -1,10 +1,10 @@
-const db = require('../config/db');
+const sql = require('../config/db');
 const errorHandler = require('../middleware/errorHandler');
 
 exports.getAllPosts = async (req, res, next) => {
   try {
-    const result = await db.query('SELECT * FROM posts ORDER BY created_at DESC');
-    res.json(result.rows);
+    const result = await sql`SELECT * FROM posts ORDER BY created_at DESC`;
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -13,11 +13,11 @@ exports.getAllPosts = async (req, res, next) => {
 exports.getPostById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const result = await db.query('SELECT * FROM posts WHERE id = $1', [id]);
-    if (result.rows.length === 0) {
+    const result = await sql`SELECT * FROM posts WHERE id = ${id}`;
+    if (result.length === 0) {
       return res.status(404).json({ error: 'Post not found' });
     }
-    res.json(result.rows[0]);
+    res.json(result[0]);
   } catch (err) {
     next(err);
   }
@@ -26,11 +26,12 @@ exports.getPostById = async (req, res, next) => {
 exports.createPost = async (req, res, next) => {
   try {
     const { title, content, user_id } = req.body;
-    const result = await db.query(
-      'INSERT INTO posts (title, content, user_id) VALUES ($1, $2, $3) RETURNING *',
-      [title, content, user_id]
-    );
-    res.status(201).json(result.rows[0]);
+    const result = await sql`
+      INSERT INTO posts (title, content, user_id)
+      VALUES (${title}, ${content}, ${user_id})
+      RETURNING *
+    `;
+    res.status(201).json(result[0]);
   } catch (err) {
     next(err);
   }
@@ -40,14 +41,16 @@ exports.updatePost = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { title, content } = req.body;
-    const result = await db.query(
-      'UPDATE posts SET title = $1, content = $2 WHERE id = $3 RETURNING *',
-      [title, content, id]
-    );
-    if (result.rows.length === 0) {
+    const result = await sql`
+      UPDATE posts
+      SET title = ${title}, content = ${content}
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    if (result.length === 0) {
       return res.status(404).json({ error: 'Post not found' });
     }
-    res.json(result.rows[0]);
+    res.json(result[0]);
   } catch (err) {
     next(err);
   }
@@ -56,8 +59,8 @@ exports.updatePost = async (req, res, next) => {
 exports.deletePost = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const result = await db.query('DELETE FROM posts WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) {
+    const result = await sql`DELETE FROM posts WHERE id = ${id} RETURNING *`;
+    if (result.length === 0) {
       return res.status(404).json({ error: 'Post not found' });
     }
     res.json({ message: 'Post deleted successfully' });

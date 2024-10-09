@@ -1,21 +1,7 @@
-const { Pool } = require('pg');
+const { neon } = require('@neondatabase/serverless');
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+const sql = neon(process.env.DATABASE_URL);
 
-module.exports = {
-  query: (text, params) => pool.query(text, params),
-};
+module.exports = sql;
 
-pool.connect()
-  .then(() => console.log('Connected to Neon PostgreSQL'))
-  .catch(err => console.error('Connection error', err.stack));
+// Remove the pool.connect() call as it's not needed with neon

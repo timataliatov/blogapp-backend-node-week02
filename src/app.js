@@ -5,20 +5,23 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const errorHandler = require('./middleware/errorHandler');
 const http = require('http');
-const { neon } = require('@neondatabase/serverless');
+const sql = require('./config/db');
 
 const userRoutes = require('./routes/users');
 const commentRoutes = require('./routes/comments');
 const postRoutes = require('./routes/posts');
 
 const app = express();
-const sql = neon(process.env.DATABASE_URL);
 
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
-app.use(errorHandler);
+
+// Add this route before your other route definitions
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to the Blog API' });
+});
 
 app.use('/api/users', userRoutes);
 app.use('/api/comments', commentRoutes);
@@ -35,6 +38,9 @@ app.get('/db-version', async (req, res) => {
     res.status(500).send('Error fetching database version');
   }
 });
+
+// Move error handler to the end
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 10000;
 const server = http.createServer(app);
